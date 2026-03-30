@@ -2,15 +2,16 @@
 import airflow
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.providers.google.cloud.operators.dataflow import DataflowCreatePythonJobOperator
+from airflow.providers.google.cloud.operators.dataflow import DataflowStartPythonJobOperator
 from datetime import timedelta
 import logging
 
-# varibale section
+# variable section
 PROJECT_ID = "sandbox-explorer-490214"
 REGION = "us-central1"
 GCS_BUCKET = "test-bkt-123123123"
 BEAM_PY_FILE = "gs://test-bucket-2015/beam_job.py"
+
 DATAFLOW_DEFAULT_OPTIONS = {
     "project": PROJECT_ID,
     "region": REGION,
@@ -20,11 +21,11 @@ DATAFLOW_DEFAULT_OPTIONS = {
 }
 
 ARGS = {
-    "owner" : "kanchan",
-    "depends_on_past" : False,
-    "start_date" : days_ago(1),
-    "retries" : 2,
-    "retry_delay" : timedelta(minutes=1),
+    "owner": "kanchan",
+    "depends_on_past": False,
+    "start_date": days_ago(1),
+    "retries": 2,
+    "retry_delay": timedelta(minutes=1),
     "email_on_failure": True,
     "email_on_retry": True,
     "email": ["abhijeetrgirdhari@gmail.com"],
@@ -42,14 +43,13 @@ with DAG(
     max_active_runs=1,
     tags=["dataflow", "beam", "etl", "data_engineering"],
 ) as dag:
-    
+
     # Task: Submit the Beam job to Dataflow
-    submit_beam_job = DataflowCreatePythonJobOperator(
+    submit_beam_job = DataflowStartPythonJobOperator(
         task_id="run_beam_job",
         py_file=BEAM_PY_FILE,
         job_name="my-beam-job",
         options=DATAFLOW_DEFAULT_OPTIONS,
         location=REGION,
-        gcp_conn_id="google_cloud_default",  
-        poll_sleep=10,  # Polling interval to check job status
+        gcp_conn_id="google_cloud_default",
     )
