@@ -2,7 +2,7 @@
 import airflow
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.providers.google.cloud.operators.dataflow import DataflowStartPythonJobOperator
+from airflow.providers.google.cloud.operators.dataflow import DataflowTemplatedJobStartOperator
 from datetime import timedelta
 import logging
 
@@ -10,15 +10,9 @@ import logging
 PROJECT_ID = "sandbox-explorer-490214"
 REGION = "us-central1"
 GCS_BUCKET = "test-bkt-123123123"
-BEAM_PY_FILE = "gs://test-bucket-2015/beam_job.py"
 
-DATAFLOW_DEFAULT_OPTIONS = {
-    "project": PROJECT_ID,
-    "region": REGION,
-    "tempLocation": f"gs://{GCS_BUCKET}/temp11",
-    "stagingLocation": f"gs://{GCS_BUCKET}/staging11",
-    "runner": "DataflowRunner",
-}
+# Using a public Dataflow template (instead of Python file)
+TEMPLATE_PATH = "gs://dataflow-templates/latest/Word_Count"
 
 ARGS = {
     "owner": "kanchan",
@@ -30,7 +24,6 @@ ARGS = {
     "email_on_retry": True,
     "email": ["abhijeetrgirdhari@gmail.com"],
     "execution_timeout": timedelta(minutes=30),
-    "catchup": False,
 }
 
 # Define the DAG
@@ -38,18 +31,21 @@ with DAG(
     dag_id="LEVEL_5_DAG",
     default_args=ARGS,
     schedule_interval="0 6 * * *",  # Runs daily at 6 AM
-    description="DAG to run an Apache Beam job on Dataflow",
+    description="DAG to run Dataflow Template",
     catchup=False,
     max_active_runs=1,
-    tags=["dataflow", "beam", "etl", "data_engineering"],
+    tags=["dataflow", "etl", "data_engineering"],
 ) as dag:
 
-    # Task: Submit the Beam job to Dataflow
-    submit_beam_job = DataflowStartPythonJobOperator(
-        task_id="run_beam_job",
-        py_file=BEAM_PY_FILE,
-        job_name="my-beam-job",
-        options=DATAFLOW_DEFAULT_OPTIONS,
+    # Task: Run Dataflow Template
+    submit_beam_job = DataflowTemplatedJobStartOperator(
+        task_id="run_dataflow_template",
+        template=TEMPLATE_PATH,
+        job_name="my-dataflow-job",
+        parameters={
+            "inputFile": "gs://dataflow-samples/shakespeare/kinglear.txt",
+            "output": f"gs://{GCS_BUCKET}/output/result",
+        },
         location=REGION,
         gcp_conn_id="google_cloud_default",
     )
