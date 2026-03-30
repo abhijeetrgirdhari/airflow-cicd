@@ -9,7 +9,7 @@ import logging
 # variable section
 PROJECT_ID = "sandbox-explorer-490214"
 REGION = "us-central1"
-GCS_BUCKET = "test-bkt-123123123"
+GCS_BUCKET = "test-bucket-2015"
 
 # Using a public Dataflow template (instead of Python file)
 TEMPLATE_PATH = "gs://dataflow-templates/latest/Word_Count"
